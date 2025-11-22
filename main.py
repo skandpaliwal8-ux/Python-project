@@ -1,4 +1,38 @@
-from board import board,print_board,position
+def board():
+    board = [
+    ["    ", "  1 ", "  2 ", "  3 ", "  4 ", "  5 ", "  6 ", "  7 ", "  8 "],
+    ["  1 ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● "],
+    ["  2 ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ "],
+    ["  3 ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● "],
+    ["  4 ", "│ ▓ ", "│ ░ ", "│ ▓ ", "│ ░ ", "│ ▓ ", "│ ░ ", "│ ▓ ", "│ ░ "],
+    ["  5 ", "│ ░ ", "│ ▓ ", "│ ░ ", "│ ▓ ", "│ ░ ", "│ ▓ ", "│ ░ ", "│ ▓ "],
+    ["  6 ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ "],
+    ["  7 ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ "],
+    ["  8 ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ "]
+]
+    return board
+#starting position
+def position():
+    position = [
+    [   # whitwe pieces
+        [1,2,0], [1,4,0], [1,6,0], [1,8,0],
+        [2,1,0], [2,3,0], [2,5,0], [2,7,0],
+        [3,2,0], [3,4,0], [3,6,0], [3,8,0]
+    ],
+    [   # black pieces
+        [6,1,0], [6,3,0], [6,5,0], [6,7,0],
+        [7,2,0], [7,4,0], [7,6,0], [7,8,0],
+        [8,1,0], [8,3,0], [8,5,0], [8,7,0]
+    ]
+]
+    return position
+
+def print_board(board):
+    for i in board:
+        for j in i:
+            print(j,end="")
+        print("\n")
+
 board=board()
 position=position()
 def edit_board(postion,board):
@@ -25,6 +59,7 @@ def edit_board(postion,board):
     return board
 
 def possible_moves(position, player, r, c):
+    print(r,c)
     moves = []
     captures = []
     if player == 0: 
@@ -32,10 +67,14 @@ def possible_moves(position, player, r, c):
     else:  
         directions = [(-1, -1), (-1, 1)]
     king = 0
+    t=0
     for p in position[player]:
         if p[0] == r and p[1] == c:
             king = p[2]
+            t=1
             break
+    if t==0:
+        return moves,captures
     if king == 1:
         directions = [(1, -1), (1, 1), (-1, -1), (-1, 1)]
     enemy = 1 - player
@@ -68,6 +107,7 @@ def possible_moves(position, player, r, c):
                         break
                 if landing_empty:
                     captures.append([jr, jc])
+    print(moves)
     return moves, captures
 
 def forced_move(position, player):
@@ -114,23 +154,22 @@ def win(position):
 
 def input_moves():
     move_input=input("Enter move: ").split()
-    k=0
     cords=[]
     for i in move_input:
-        if i.isdigit()==True or i.isspace()==True:
-            if i.isdigit==True:
-                cords[k]=int(i)
+        if i.isdigit()==True:
+                cords.append(int(i))
                 continue
-        elif move_input.lower()=="save":
-            print("Initiation save sequence")
-            return 1
+        elif ("".join(move_input)).lower()=="save":
+                print("Initiation save sequence")
+                return 1
         else:
-            print("Enter correct input")
-            return 0
+                print("Enter correct input")
+                return 0
     if cords[0]>8 or cords[1]>8 or cords[0]<0 or cords[1]<0:
         print("Out of board! Enter the move again")
         return 0
     return cords
+
 
 def inverse(player):
     if player==0:
@@ -140,25 +179,25 @@ def inverse(player):
 
     return
 #player1 is black player2 is white
-def game():
-    player=1
+def game(board,position):
+    player=0
     c=0
     print("Top left represents (1 1). Enter the coordinates as (row column)")
     print("Type 'SAVE' to save the current game to continue playing it later")
     while True:
-        player=inverse(player)
         print_board(board)
+        print(f"It's player{player+1}'s turn")
         forced,pos_moves= forced_move(position, player)
         if all(len(x) == 0 for x in pos_moves):
             print("Out of moves!!!!")
             print(f"{inverse(player)+1} wins!!")
             break
         if forced:
-            print("u have to capture bitchass")
             print("pieces that must move:")
-            for (r,c), caps in forced:
-                print(f"piece at {r} {c} can capture to:", caps)
-        print(f"It's player{player+1}'s turn")
+            for i in forced:
+                print(f"piece at {i[0]} {i[1]} can capture to:")
+                c=1
+
         cords=input_moves()
         if isinstance(cords,int):
             if cords==1:
@@ -166,7 +205,12 @@ def game():
             else:
                 continue
         moves,captures=possible_moves(position,player,cords[0],cords[1])
-
+        print(moves)
+        print(captures)
+        if c==1:
+            if cords not in forced:
+                print("u have to capture bitchass")
+                continue
         if moves==[]:
             print("Invalid move!")
             continue
@@ -191,7 +235,8 @@ def game():
         position=queen(position,player)
         board=edit_board(position,board)
         win(position)
+        player=inverse(player)
 
-game()
+game(board,position)
 
   
