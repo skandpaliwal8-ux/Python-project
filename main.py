@@ -1,31 +1,9 @@
-def board():
-    board = [
-    ["    ", "  1 ", "  2 ", "  3 ", "  4 ", "  5 ", "  6 ", "  7 ", "  8 "],
-    ["  1 ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● "],
-    ["  2 ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ "],
-    ["  3 ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● ", "│ ░ ", "│ ● "],
-    ["  4 ", "│ ▓ ", "│ ░ ", "│ ▓ ", "│ ░ ", "│ ▓ ", "│ ░ ", "│ ▓ ", "│ ░ "],
-    ["  5 ", "│ ░ ", "│ ▓ ", "│ ░ ", "│ ▓ ", "│ ░ ", "│ ▓ ", "│ ░ ", "│ ▓ "],
-    ["  6 ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ "],
-    ["  7 ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ "],
-    ["  8 ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ ", "│ ○ ", "│ ░ "]
-]
-    return board
-#starting position
-def position():
-    position = [
-    [   # whitwe pieces
-        [1,2,0], [1,4,0], [1,6,0], [1,8,0],
-        [2,1,0], [2,3,0], [2,5,0], [2,7,0],
-        [3,2,0], [3,4,0], [3,6,0], [3,8,0]
-    ],
-    [   # black pieces
-        [6,1,0], [6,3,0], [6,5,0], [6,7,0],
-        [7,2,0], [7,4,0], [7,6,0], [7,8,0],
-        [8,1,0], [8,3,0], [8,5,0], [8,7,0]
-    ]
-]
-    return position
+import random
+import json
+from board import board, position
+from file_manager import load_game, save_game
+board = board()
+position = position()
 
 def print_board(board):
     for i in board:
@@ -33,9 +11,7 @@ def print_board(board):
             print(j,end="")
         print("\n")
 
-board=board()
-position=position()
-def edit_board(postion,board):
+def edit_board(position,board):
     #king black board black piece white board white peice
     piece=["| ⛁ ","│ ░ ","│ ○ ", "│ ▓ ","│ ● "]
     for i in range(len(board)):
@@ -44,18 +20,27 @@ def edit_board(postion,board):
         for j in range(len(board[i])):
             if j==0:
                 continue
+            # set default square (light/dark)
             if (i%2==0 and j%2!=0) or (i%2!=0 and j%2==0):
                 board[i][j]=piece[3]
+            else:
+                board[i][j]=piece[1]
+            # check black pieces (player 0)
             for k in position[0]:
-                if k[2]==1:
-                    board[i][j]=piece[0]
                 if k[0]==i and k[1]==j:
-                    board[i][j]=piece[2]
+                    if k[2]==1:
+                        board[i][j]=piece[0]
+                    else:
+                        board[i][j]=piece[2]
+                    break
+            # check white pieces (player 1)
             for k in position[1]:
-                if k[2]==1:
-                    board[i][j]=piece[0]
                 if k[0]==i and k[1]==j:
-                    board[i][j]=piece[4]
+                    if k[2]==1:
+                        board[i][j]=piece[0]
+                    else:
+                        board[i][j]=piece[4]
+                    break
     return board
 
 def possible_moves(position, player, r, c):
@@ -112,11 +97,12 @@ def possible_moves(position, player, r, c):
 
 def forced_move(position, player):
     forced = []
-    pos_moves=[]
+    pos_moves={}
     for piece in position[player]:
         r, c, k = piece
+        t=f"{r} {c}"
         moves, captures = possible_moves(position, player, r, c)
-        pos_moves.append(moves)
+        pos_moves[t]=moves
         if captures:
             forced.append([r, c])
     return forced,pos_moves
@@ -127,22 +113,28 @@ def queen(position,move):
             if i[0]==8:
                 i[2]=1
         if move==1:
-            if i[0]==0:
+            if i[0]==1:
                 i[2]=1
     return position
 
 def update_position(position, old_r, old_c, new_r, new_c, player):
+    cap = False
     for piece in position[player]:
         if piece[0] == old_r and piece[1] == old_c:
             piece[0] = new_r
             piece[1] = new_c
             break
-    other = 1 - player
-    for enemy in position[other]:
-        if enemy[0] == new_r and enemy[1] == new_c:
-            position[other].remove(enemy)
-            break
-    return position
+    # detect and remove captured piece (capture if moved by 2)
+    if abs(new_r - old_r) == 2 and abs(new_c - old_c) == 2:
+        po1 = old_r + (new_r - old_r)//2
+        po2 = old_c + (new_c - old_c)//2
+        other = 1 - player
+        for enemy in position[other]:
+            if enemy[0] == po1 and enemy[1] == po2:
+                position[other].remove(enemy)
+                cap = True
+                break
+    return position, cap
 
 def win(position):
     if position[0]==[]:
@@ -152,8 +144,8 @@ def win(position):
         print("Player1 wins")
         return 0
 
-def input_moves():
-    move_input=input("Enter move: ").split()
+def input_moves(prompt_text="Enter move: "):
+    move_input=input(prompt_text).split()
     cords=[]
     for i in move_input:
         if i.isdigit()==True:
@@ -165,7 +157,10 @@ def input_moves():
         else:
                 print("Enter correct input")
                 return 0
-    if cords[0]>8 or cords[1]>8 or cords[0]<0 or cords[1]<0:
+    if len(cords) < 2:
+        print("Enter correct input")
+        return 0
+    if cords[0]>8 or cords[1]>8 or cords[0]<1 or cords[1]<1:
         print("Out of board! Enter the move again")
         return 0
     return cords
@@ -177,66 +172,96 @@ def inverse(player):
     else:
         return 0
 
-    return
+def bot_select(pos_moves):
+    items = [(k,v) for k,v in pos_moves.items() if v]
+    if not items:
+        return None
+    key, moves = random.choice(items)
+    r, c = map(int, key.split())
+    chosen = random.choice(moves)
+    return [r, c], chosen
+        
 #player1 is black player2 is white
-def game(board,position):
-    player=0
-    c=0
-    print("Top left represents (1 1). Enter the coordinates as (row column)")
-    print("Type 'SAVE' to save the current game to continue playing it later")
+def game(board, position):
+    print("Welcome to checkers!!!!")
+    q = input("Load previous game? (Y/N): ").lower()
+    player = 0
+    if q == "y":
+        lp, pl = load_game()
+        if lp is not None:
+            position = lp
+            player = pl
+    try:
+        l = int(input("1. Bot\n2. 1v1\nChoose: "))
+    except:
+        l = 2
+
     while True:
+        board = edit_board(position, board)
         print_board(board)
-        print(f"It's player{player+1}'s turn")
-        forced,pos_moves= forced_move(position, player)
-        if all(len(x) == 0 for x in pos_moves):
-            print("Out of moves!!!!")
-            print(f"{inverse(player)+1} wins!!")
+        print(f"Player{player+1}'s turn")
+        forced, pos_moves = forced_move(position, player)
+        if all(len(x) == 0 for x in pos_moves.values()):
+            print(f"Player{inverse(player)+1} wins!!")
             break
-        if forced:
-            print("pieces that must move:")
-            for i in forced:
-                print(f"piece at {i[0]} {i[1]} can capture to:")
-                c=1
 
-        cords=input_moves()
-        if isinstance(cords,int):
-            if cords==1:
+        if player == 1 and l == 1:
+            start, end = bot_select(pos_moves)
+            if start is None:
                 break
-            else:
-                continue
-        moves,captures=possible_moves(position,player,cords[0],cords[1])
-        print(moves)
-        print(captures)
-        if c==1:
-            if cords not in forced:
-                print("u have to capture bitchass")
-                continue
-        if moves==[]:
-            print("Invalid move!")
-            continue
-        print("Your possible moves are:",[i for i in moves])
-        if captures==[]:
-            print("You don'r have any captures")
+            moves, captures = possible_moves(position, player, start[0], start[1])
         else:
-            print("Your possible captures are:",[i for i in captures])
-        while True:
-            cur=input_moves()
-            if isinstance(cur,int):
-                if cur==1:
-                    continue
-                else:
-                    break
-            if cur not in moves:
-                print("SAhi chale yaar")
+            cords = input_moves()
+            if cords == 1:
+                save_game(position)
                 continue
-            else:
-                break  
-        position=update_position(position,cords[0],cords[1],cur[0],cur[1],player)
-        position=queen(position,player)
-        board=edit_board(position,board)
-        win(position)
-        player=inverse(player)
+            if not cords:
+                continue
+            start = cords
+            moves, captures = possible_moves(position, player, start[0], start[1])
+            if forced and start not in forced:
+                print("Must capture.")
+                continue
+            print("Moves:", moves)
+            print("Captures:", captures)
+            cur = input_moves()
+            if cur == 1:
+                save_game(position, player)
+                continue
+            end = cur
+            if forced and end not in captures:
+                print("Must capture.")
+                continue
+            if not forced and end not in moves:
+                print("Invalid.")
+                continue
 
-game(board,position)
+        position, cap = update_position(position, start[0], start[1], end[0], end[1], player)
+        position = queen(position, player)
 
-  
+        if cap:
+            rr, cc = end
+            while True:
+                w, ccaps = possible_moves(position, player, rr, cc)
+                if not ccaps:
+                    break
+                if player == 1 and l == 1:
+                    nxt = random.choice(ccaps)
+                else:
+                    print("Next captures:", ccaps)
+                    nxt = input_moves("Enter next capture: ")
+                if nxt == 1:
+                    save_game(position, player)
+                    continue
+                if nxt not in ccaps:
+                    continue
+                position, _ = update_position(position, rr, cc, nxt[0], nxt[1], player)
+                position = queen(position, player)
+                rr, cc = nxt[0], nxt[1]
+
+        k = win(position)
+        if k == 0:
+            break
+        player = inverse(player)
+
+game(board, position)
