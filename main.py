@@ -1,6 +1,6 @@
 import random
 from board import board, position,print_board
-from file_manager import load_game, save_game
+from file_manager import load_game, save_game               ##imports all the functions required from the other files
 board = board()
 position = position()
 from game_logic import edit_board, possible_moves, forced_move, update_position, queen, win, input_moves, inverse,bot_select
@@ -8,7 +8,7 @@ from game_logic import edit_board, possible_moves, forced_move, update_position,
 #player1 is black player2 is white
 def game(board, position):
     print("Welcome to checkers!!!!")
-    q = input("Load previous game? (Y/N): ").lower()
+    q = input("Load previous game? (Y/N): ").lower()              #basic interface when running the code that allows you to load a saved game
     player = 0
     t=0
     if q == "y":
@@ -26,7 +26,7 @@ def game(board, position):
         print_board(board)
         print(f"Player{player+1}'s turn")
         forced, pos_moves = forced_move(position, player)
-        if all(len(x) == 0 for x in pos_moves.values()):
+        if all(len(x) == 0 for x in pos_moves.values()):                                     #when the game ends
             print(f"Player{inverse(player)+1} wins!!")
             break
 
@@ -79,7 +79,7 @@ def game(board, position):
                     nxt = input_moves("Enter next capture: ")
                 if nxt == 1:
                     save_game(position, player)
-                    continue
+                    continue                                                                   ##main function to run the game
                 if nxt not in ccaps:
                     continue
                 position, _ = update_position(position, rr, cc, nxt[0], nxt[1], player)
