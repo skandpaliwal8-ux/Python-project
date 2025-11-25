@@ -3,7 +3,7 @@ import random
 
 def edit_board(position,board):
     #king black board black piece white board white peice
-    piece=["| ⛁ ","│ ░ ","│ ○ ", "│ ▓ ","│ ● "]
+    piece=["| ⛁ ","│ ░ ","│ ○ ", "│ ▓ ","│ ● ","| ⛂ "]
     for i in range(len(board)):
         if i==0:
             continue
@@ -27,7 +27,7 @@ def edit_board(position,board):
             for k in position[1]:
                 if k[0]==i and k[1]==j:
                     if k[2]==1:
-                        board[i][j]=piece[0]
+                        board[i][j]=piece[5]
                     else:
                         board[i][j]=piece[4]
                     break

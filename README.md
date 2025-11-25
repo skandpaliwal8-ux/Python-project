@@ -36,7 +36,6 @@ Setup Instructions
 Requirements
 Python 3.8 or later
 No external libraries are needed
-
 How to Run
 Download the project folder.
 Open a terminal in the project directory.
